@@ -37,7 +37,6 @@ label <- as.data.frame(label)
 label$variable <- rownames(label)
 label <- label[c(2,1)]
 datainfo <- left_join(datainfo, label, by = "variable")
-View(datainfo)
 # summary statistics of variables
 summary(data)
 ```
@@ -86,7 +85,7 @@ Regress callback rates on race, GED, and employment gap. Include “chain”1 an
 ```{r}
 reg1 <- data %>% lm(response~white + ged + empgap + chain_id + center, data = .)
 ```
-```{r results=`asis`}
+```{r results='asis'}
 stargazer(reg1, type = "latex", title = "Call Back Rates", covariate.labels = c("Race = White", "GED Acquired", "Employment Gap Exists", "Chain", "Center"), digits = 6, single.row = TRUE)
 ```
 
