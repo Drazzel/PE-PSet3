@@ -1,0 +1,38 @@
+---
+title: "PE-PSet3"
+output: pdf_document
+author: Drazzel Feliu - 12174100
+---
+
+```{r setup, results='hide', warning=FALSE, message=FALSE,include=FALSE}
+# Clear Workspace
+rm(list=ls())
+
+# Load Libraries
+library(haven)
+library(reshape)
+library(tidyverse)
+library(magrittr)
+library(survival)
+library(ggplot2)
+library(rdd)
+library(ggpubr)
+library(stargazer)
+```
+
+```{r, results='hide'}
+# load data set
+data <- read_dta("AganStarrQJEData.dta")
+# create data table identifying class and labels for each variable
+datainfo <- data.frame(variable=colnames(data),
+           class=sapply(data, class)
+           )
+label=unlist(lapply(data, function (x) attr(x, "label")))
+label <- as.data.frame(label)
+label$variable <- rownames(label)
+label <- label[c(2,1)]
+datainfo <- left_join(datainfo, label, by = "variable")
+View(datainfo)
+# summary statistics of variables
+summary(data)
+```
