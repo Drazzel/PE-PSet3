@@ -18,7 +18,12 @@ library(ggplot2)
 library(rdd)
 library(ggpubr)
 library(stargazer)
+library(sciplot)
 ```
+
+For this assignment, provide a write-up where you answer the questions below, selectively cutting and pasting output where needed. Be concise in your write-up; excess wordiness will be penalized. Also, submit a log file that includes commands and results for your entire analysis. The assignment makes use of AganStarrQJEData.dta, which you can find on Canvas.
+
+In this problem set we will reproduce some of Amanda Agan and Sonja Starr’s basic results, so start by reading their paper (Ban the box, criminal records, and racial discrimination: A field experiment), which you can find on Canvas.
 
 ```{r, results='hide'}
 # load data set
@@ -36,3 +41,61 @@ View(datainfo)
 # summary statistics of variables
 summary(data)
 ```
+
+# Questions:
+
+## 1
+
+For this question, restrict your analysis to the set of job applications that asked about criminal records (“Box” applications) in the before period (“pre-BTB” period). (Note: there are some applications that did not have a box in the pre-BTB period, but then added them in the post- period. Agan and Star code these as “remover = -1” in their data and call them “reverse compliers.” Exclude these observations from your analysis throughout this assignment.)
+
+```{r}
+# Permanently filter data for all reverse compliers
+data <- filter(data, remover!=-1)
+```
+
+### A)
+What is the average callback rate for people who committed crimes? For those who didn’t? Is the difference statistically significant?
+
+### Answer
+```{r}
+# Summary of Means across both groups
+data %>% group_by(crime) %>% summarise(mean = mean(response)*100)
+
+# Significance test across two groups for the callback rate
+t.test(response~crime, data = data)
+```
+
+The average callback rate for people who committed crimes is 10.94% and is 12.51% for individuals who did not commit crimes. The difference is considered statistically significant at a 95% confidence level.
+
+### B)
+
+Can we interpret this as a causal effect? Explain briefly.
+
+### Answer
+
+Interpretating this relationship as causal currently is premature. We haven't controlled for the type of application individuals are receiving nor across other demographic controls that may have an influence on the rate of callbacks (level of education, interviewer bias through perceptions of race, geographic location of individuals, hiring needs across time). Several variables may disentangle the impact of criminal history on positive responses to applications.
+
+## 2
+
+Now consider just the “Box” applications but include both the pre- and post-BTB periods.
+
+### A)
+
+Regress callback rates on race, GED, and employment gap. Include “chain”1 and “center” fixed effects. Does race appear to have an effect on callback rates? Does this coefficient have a causal interpretation?
+
+```{r}
+reg1 <- data %>% lm(response~white + ged + empgap + chain_id + center, data = .)
+```
+```{r results=`asis`}
+stargazer(reg1, type = "latex", title = "Call Back Rates", covariate.labels = c("Race = White", "GED Acquired", "Employment Gap Exists", "Chain", "Center"), digits = 6, single.row = TRUE)
+```
+
+### B)
+
+Estimate the model again, but without the chain and center fixed effects. Does the
+coefficient on “white” change? Why is it important to include chain and center fixed
+effects?
+
+### C) 
+
+Now add the “conviction” variable. What happens to the coefficient on “white”? If the coefficient changes, does this mean that the previous regression was subject to omitted variable bias?
