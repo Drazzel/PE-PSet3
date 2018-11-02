@@ -83,6 +83,7 @@ Regress callback rates on race, GED, and employment gap. Include “chain”1 an
 ```{r}
 reg1 <- data %>% lm(response~white + ged + empgap + chain_id + center, data = .)
 ```
+
 ```{r results='asis'}
 stargazer(reg1, type = "latex", title = "Call Back Rates With Fixed Effects", covariate.labels = c("Race = White", "GED Acquired", "Employment Gap Exists", "Chain", "Center"), digits = 6, single.row = TRUE)
 ```
@@ -127,13 +128,15 @@ stargazer(reg3, type = "latex", title = "Call Back Rates With Crime", covariate.
 
 The authors estimate the following model for different subsets of the data, where “Box” is an indicator for whether the application had a box asking about employment2, and X is a vector of covariates:
 
+$$ Callback_{ij}  = \alpha + \beta_1 Box_j + \beta_2 White_i + \beta_3 Box_j * White_i + X_i\gamma + \epsilon_{ij}$$
+
 ## A)
 
-Suppose they run this regression on the full sample, which includes both Box and non- Box applications, but only in the pre-period (don’t actually do this yet). What do α, β_1, β_2, and β_3 tell you?
+Suppose they run this regression on the full sample, which includes both Box and non- Box applications, but only in the pre-period (don’t actually do this yet). What do $\alpha$, $\beta_1$, $\beta_2$, and $\beta_3$ tell you?
 
 ### Answer:
 
-
+$\alpha$ is going to tell you the baseline response rate for all individuals who submitted applications in the sample.
 
 ## B)
 
@@ -141,7 +144,7 @@ Do you think “Box” and “non-Box” stores might differ in systematic ways,
 
 ### Answer:
 
-
+This variable is not "as-if" randomly assigned. Any store that willingly chooses to avoid using the box in principal expects to have a markedly different applicant pool, given the lack of the presence of the box. They are uniquely aware of the selection effect of knowingly removing the box and as such are probably more amenable to selection independent of criminal history.
 
 ## C)
 
@@ -161,7 +164,10 @@ Estimate the model from question 3 on both “Box” and non-“Box” applicati
 
 ### Answer:
 
-
+```{r}
+reg4 <- data %>% filter(., pre==1) %>% lm(response~crimbox + white + box_white + crime + ged + empgap, data = .)
+summary(reg4)
+```
 
 ## B)
 
@@ -187,7 +193,10 @@ Interpret the coefficients.
 
 ### Answer:
 
-
+```{r}
+reg5 <- data %>% filter(., crimbox==1) %>% lm(response~crimbox + white + box_white + crime + ged + empgap, data = .)
+summary(reg5)
+```
 
 # Question 5:
 
