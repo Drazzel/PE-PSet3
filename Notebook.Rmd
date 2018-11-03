@@ -62,7 +62,8 @@ data %>% group_by(crime) %>% summarise(mean = mean(response)*100)
 t.test(response~crime, data = data)
 ```
 
-The average callback rate for people who committed crimes is 10.94% and is 12.51% for individuals who did not commit crimes. The difference is considered statistically significant at a 95% confidence level.
+
+The average callback rate for people who committed crimes is 10.94% and is 12.51% for individuals who did not commit crimes. The difference is statistically significant at a 95% confidence level.
 
 ## B)
 
@@ -70,7 +71,7 @@ Can we interpret this as a causal effect? Explain briefly.
 
 ### Answer:
 
-Interpretating this relationship as causal currently is premature. We haven't controlled for the type of application individuals are receiving nor across other demographic controls that may have an influence on the rate of callbacks (level of education, interviewer bias through perceptions of race, geographic location of individuals, hiring needs across time). Several variables may disentangle the impact of criminal history on positive responses to applications.
+Interpretating this relationship as causal is premature at the moment. We haven't controlled for the type of application individuals are receiving nor across other demographic controls that may have an influence on the rate of callbacks (level of education, interviewer bias through perceptions of race, geographic location of individuals, hiring needs across time). Several variables may disentangle the impact of criminal history on positive responses to applications.
 
 # Question 2:
 
@@ -78,19 +79,23 @@ Now consider just the “Box” applications but include both the pre- and post-
 
 ## A)
 
-Regress callback rates on race, GED, and employment gap. Include “chain”1 and “center” fixed effects. Does race appear to have an effect on callback rates? Does this coefficient have a causal interpretation?
+Regress callback rates on race, GED, and employment gap. Include “chain 1" and “center” fixed effects. Does race appear to have an effect on callback rates? Does this coefficient have a causal interpretation?
 
 ```{r}
-reg1 <- data %>% lm(response~white + ged + empgap + chain_id + center, data = .)
+reg1 <- data %>% filter(., crimbox==1) %>%
+  lm(response~white + ged + empgap + chain_id + center, data = .)
 ```
 
 ```{r results='asis'}
-stargazer(reg1, type = "latex", title = "Call Back Rates With Fixed Effects", covariate.labels = c("Race = White", "GED Acquired", "Employment Gap Exists", "Chain", "Center"), digits = 6, single.row = TRUE)
+stargazer(reg1, type = "latex", title = "Call Back Rates With Fixed Effects",
+          covariate.labels = c("Race = White", "GED Acquired",
+                               "Employment Gap Exists", "Chain", "Center"), 
+          digits = 6, single.row = TRUE)
 ```
 
 ### Answer:
 
-
+The coefficient on race (Table 1) is not statistically significant. While being white seems to have a negative impact on the response rate, it cannot be distinguished from 0 and so we have to identify that it is likely not an effect on response rates. Subsequently, we cannot say it has a causal impact on response rates for applications that feature a box.
 
 ## B)
 
@@ -99,30 +104,38 @@ coefficient on “white” change? Why is it important to include chain and cent
 effects?
 
 ```{r}
-reg2 <- data %>% lm(response~white + ged + empgap, data = .)
+reg2 <- data %>% filter(., crimbox==1) %>%
+  lm(response~white + ged + empgap, data = .)
 ```
 ```{r results='asis'}
-stargazer(reg2, type = "latex", title = "Call Back Rates Without Fixed Effects", covariate.labels = c("Race = White", "GED Acquired", "Employment Gap Exists"), digits = 6, single.row = TRUE)
+stargazer(reg2, type = "latex", title = "Call Back Rates Without Fixed Effects",
+          covariate.labels = c("Race = White", "GED Acquired",
+                               "Employment Gap Exists"),
+          digits = 6, single.row = TRUE)
 ```
 
 ### Answer:
 
-
+Removing the fixed effects minimizes the impact of race as a factor on response rate (from $-0.001483$ to $-0.001140$). The chain and center fixed effects normalize the impact of race on response for the heteregeneous differences across jurisdictions, making them valuable tools for analyzing how race influences the response rate among applications that feature the box. 
 
 ## C) 
 
 Now add the “conviction” variable. What happens to the coefficient on “white”? If the coefficient changes, does this mean that the previous regression was subject to omitted variable bias?
 
 ```{r}
-reg3 <- data %>% lm(response~white + ged + empgap + crime, data = .)
+reg3 <- data %>% filter(., crimbox==1) %>%
+  lm(response~white + ged + empgap + crime, data = .)
 ```
 ```{r results='asis'}
-stargazer(reg3, type = "latex", title = "Call Back Rates With Crime", covariate.labels = c("Race = White", "GED Acquired", "Employment Gap Exists", "Crime Committed"), digits = 6, single.row = TRUE)
+stargazer(reg3, type = "latex", title = "Call Back Rates With Crime",
+          covariate.labels = c("Race = White", "GED Acquired",
+                               "Employment Gap Exists", "Crime Committed"), 
+          digits = 6, single.row = TRUE)
 ```
 
 ### Answer:
 
-
+The coefficient on white further decreases even without the fixed effects (Table 3). In the absence of the fixed effects, the white coefficient drops from $-0.001140$ to $-0.001117$. This is a clear example of the omitted variable bias influencing the white coefficient.
 
 # Question 3:
 
@@ -136,7 +149,7 @@ Suppose they run this regression on the full sample, which includes both Box and
 
 ### Answer:
 
-$\alpha$ is going to tell you the baseline response rate for all individuals who submitted applications in the sample.
+$\alpha$ is provides the baseline response rate for all individuals who submitted applications in the sample. $\beta_1$ is the impact that an application that has the box has on response rates across the board for all individuals. $\beta_2$ highlights the effect of being white on response rates across the board, independent of whether the box exists on the application. $\beta_3$ then is the impact that being white has on applications that do feature the box. All of these coefficients however are limited in that their impact is only defined on applications submitted in the period before the box was banned.
 
 ## B)
 
@@ -152,7 +165,7 @@ Suppose they run the regression on just the “Box” applications in both perio
 
 ### Answer:
 
-
+The coefficients for $\alpha$ and $\beta_2$ would indicate the impact of 
 
 # Question 4:
 
@@ -165,7 +178,8 @@ Estimate the model from question 3 on both “Box” and non-“Box” applicati
 ### Answer:
 
 ```{r}
-reg4 <- data %>% filter(., pre==1) %>% lm(response~crimbox + white + box_white + crime + ged + empgap, data = .)
+reg4 <- data %>% filter(., pre==1) %>%
+  lm(response~crimbox + white + box_white + crime + ged + empgap, data = .)
 summary(reg4)
 ```
 
@@ -194,7 +208,8 @@ Interpret the coefficients.
 ### Answer:
 
 ```{r}
-reg5 <- data %>% filter(., crimbox==1) %>% lm(response~crimbox + white + box_white + crime + ged + empgap, data = .)
+reg5 <- data %>% filter(., crimbox==1) %>% 
+  lm(response~crimbox + white + box_white + crime + ged + empgap, data = .)
 summary(reg5)
 ```
 
