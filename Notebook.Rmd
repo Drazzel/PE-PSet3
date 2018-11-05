@@ -19,6 +19,11 @@ library(rdd)
 library(ggpubr)
 library(stargazer)
 library(sciplot)
+
+library(RCurl)
+url_robust <- "https://raw.githubusercontent.com/IsidoreBeautrelet/economictheoryblog/master/robust_summary.R" 
+eval(parse(text = getURL(url_robust, ssl.verifypeer = FALSE)),
+     envir=.GlobalEnv)
 ```
 
 For this assignment, provide a write-up where you answer the questions below, selectively cutting and pasting output where needed. Be concise in your write-up; excess wordiness will be penalized. Also, submit a log file that includes commands and results for your entire analysis. The assignment makes use of AganStarrQJEData.dta, which you can find on Canvas.
@@ -55,15 +60,15 @@ What is the average callback rate for people who committed crimes? For those who
 
 ### Answer:
 ```{r}
-# Summary of Means across both groups
-data %>% group_by(crime) %>% summarise(mean = mean(response)*100)
+# Summary of Means across both groups across both periods
+data %>% group_by(crime) %>% summarise(mean = mean(response))
 
 # Significance test across two groups for the callback rate
 t.test(response~crime, data = data)
 ```
 
 
-The average callback rate for people who committed crimes is 10.94% and is 12.51% for individuals who did not commit crimes. The difference is statistically significant at a 95% confidence level.
+The average callback rate for people who committed crimes is 10.94% and is 12.51% for individuals who did not commit crimes for all types of applications across both time periods. The difference is statistically significant at a 95% confidence level.
 
 ## B)
 
@@ -87,9 +92,9 @@ reg1 <- data %>% filter(., crimbox==1) %>%
 ```
 
 ```{r results='asis'}
-stargazer(reg1, type = "latex", title = "Call Back Rates With Fixed Effects",
-          covariate.labels = c("Race = White", "GED Acquired",
-                               "Employment Gap Exists", "Chain", "Center"), 
+stargazer(reg1, type = "latex", title = "Call Back Rates With Fixed Effects (Box Only, Both Periods)",
+          covariate.labels = c("White", "GED",
+                               "Employment Gap", "Chain FE", "Center FE"), 
           digits = 6, single.row = TRUE)
 ```
 
@@ -107,16 +112,17 @@ effects?
 reg2 <- data %>% filter(., crimbox==1) %>%
   lm(response~white + ged + empgap, data = .)
 ```
+
 ```{r results='asis'}
-stargazer(reg2, type = "latex", title = "Call Back Rates Without Fixed Effects",
-          covariate.labels = c("Race = White", "GED Acquired",
-                               "Employment Gap Exists"),
+stargazer(reg2, type = "latex", title = "Call Back Rates Without Fixed Effects (Box Only, Both Periods)",
+          covariate.labels = c("White", "GED",
+                               "Employment Gap"),
           digits = 6, single.row = TRUE)
 ```
 
 ### Answer:
 
-Removing the fixed effects minimizes the impact of race as a factor on response rate (from $-0.001483$ to $-0.001140$). The chain and center fixed effects normalize the impact of race on response for the heteregeneous differences across jurisdictions, making them valuable tools for analyzing how race influences the response rate among applications that feature the box. 
+Removing the fixed effects minimizes the impact of race as a factor on response rate (from $-0.001483$ to $-0.001140$). The chain and center fixed effects normalize the impact of race on callbacks by the heterogeneous differences across jurisdictions, making them valuable tools for analyzing how race influences the response rate among applications that feature the box. 
 
 ## C) 
 
@@ -127,15 +133,15 @@ reg3 <- data %>% filter(., crimbox==1) %>%
   lm(response~white + ged + empgap + crime, data = .)
 ```
 ```{r results='asis'}
-stargazer(reg3, type = "latex", title = "Call Back Rates With Crime",
-          covariate.labels = c("Race = White", "GED Acquired",
-                               "Employment Gap Exists", "Crime Committed"), 
+stargazer(reg3, type = "latex", title = "Call Back Rates With Crime (Box Only, Both Periods)",
+          covariate.labels = c("White", "GED",
+                               "Employment Gap", "Crime"), 
           digits = 6, single.row = TRUE)
 ```
 
 ### Answer:
 
-The coefficient on white further decreases even without the fixed effects (Table 3). In the absence of the fixed effects, the white coefficient drops from $-0.001140$ to $-0.001117$. This is a clear example of the omitted variable bias influencing the white coefficient.
+The coefficient on white further decreases in magnitude even without the fixed effects (Table 3). In the absence of the fixed effects, the white coefficient changes from $-0.001140$ to $-0.001117$. This is a clear example of the omitted variable bias influencing the white coefficient.
 
 # Question 3:
 
@@ -149,7 +155,7 @@ Suppose they run this regression on the full sample, which includes both Box and
 
 ### Answer:
 
-$\alpha$ is provides the baseline response rate for all individuals who submitted applications in the sample. $\beta_1$ is the impact that an application that has the box has on response rates across the board for all individuals. $\beta_2$ highlights the effect of being white on response rates across the board, independent of whether the box exists on the application. $\beta_3$ then is the impact that being white has on applications that do feature the box. All of these coefficients however are limited in that their impact is only defined on applications submitted in the period before the box was banned.
+$\alpha$ provides the baseline response rate for all individuals who submitted applications in the sample. $\beta_1$ is the percentage point impact that an application that has the box has on response rates across the board for all individuals. $\beta_2$ highlights the effect of being white on response rates across the board, independent of whether the box exists on the application. $\beta_3$ then is the impact that being white has on applications that do feature the box. All of these coefficients however are limited in that their impact would only be defined on applications submitted in the period before the box was banned, given the stipulation above.
 
 ## B)
 
@@ -157,7 +163,7 @@ Do you think “Box” and “non-Box” stores might differ in systematic ways,
 
 ### Answer:
 
-This variable is not "as-if" randomly assigned. Any store that willingly chooses to avoid using the box in principal expects to have a markedly different applicant pool, given the lack of the presence of the box. They are uniquely aware of the selection effect of knowingly removing the box and as such are probably more amenable to selection independent of criminal history.
+This variable is not "as-if" randomly assigned. Any store that willingly chooses to avoid using the box in principal expects to have a markedly different applicant pool, given the lack of the presence of the box. They are uniquely aware of the selection effect of knowingly removing the box and as such are probably more amenable to selection independent of criminal history. However, given that the box effectively limits statistical discrimination, stores that do not feature the box may be more likely to be biased against black candidates and removing the box may be a tool to apply that bias broadly.
 
 ## C)
 
@@ -165,7 +171,7 @@ Suppose they run the regression on just the “Box” applications in both perio
 
 ### Answer:
 
-The coefficients for $\alpha$ and $\beta_2$ would indicate the impact of 
+Running this regression on only applications featuring the box requires removing two variables, $Box_j$ & $Box_j * White_i$, as these variables no longer exhibit any meaningful variation. This does ultimately impact the coefficients $\alpha$ and $\beta_2$, where $\alpha$ is now the base response rate for all applications and $\beta_2$ is now the percentage point change in the response rate given the applicants race, under the presumption that all applications have the box. 
 
 # Question 4:
 
@@ -179,8 +185,14 @@ Estimate the model from question 3 on both “Box” and non-“Box” applicati
 
 ```{r}
 reg4 <- data %>% filter(., pre==1) %>%
-  lm(response~crimbox + white + box_white + crime + ged + empgap, data = .)
-summary(reg4)
+  lm(response~crimbox + white + box_white + crime + ged + empgap + center, data = .)
+```
+
+```{r results='asis'}
+stargazer(reg4, type = "latex", title = "Call Backs Rates (Pre-Period)",
+          covariate.labels = c("Box","White", "Box x White","Crime",
+                               "GED","Employment Gap", "Center FE"), 
+          digits = 6, single.row = TRUE)
 ```
 
 ## B)
@@ -189,7 +201,10 @@ What kind of standard errors should you use, and why?
 
 ### Answer:
 
-
+```{r}
+ncvTest(reg4)
+```
+The p-value of the non-constant variance score test indicates that heteroskedasticity is present in our model and to address this, we should be applying robust standard errors to account for this going forward.
 
 ## C)
 
@@ -198,24 +213,35 @@ interaction of “crimbox” and “white”? Interpret these findings.
 
 ### Answer:
 
-
+The coefficient on crimbox in this model is not statistically significant. The interaction of crimbox and white is only statistically significant at the 90% level. The interaction coefficient signifies that being white and submitting for a position where the box is present slightly diminishes the likelihood ($-0.0296$) of a callback. This is simultaneously offset by the crimbox coefficient ($0.0158$) despite the fact that it's not statistically significant.
 
 ## D)
 
-Now estimate the model from question 3 on just “Box” applications in both periods.
-Interpret the coefficients.
+Now estimate the model from question 3 on just “Box” applications in both periods. Interpret the coefficients.
 
 ### Answer:
 
 ```{r}
 reg5 <- data %>% filter(., crimbox==1) %>% 
-  lm(response~crimbox + white + box_white + crime + ged + empgap, data = .)
-summary(reg5)
+  lm(response~white + crime + ged + empgap + chain_id + center, data = .)
+robust_se <- as.vector(summary(reg5,robust = T)$coefficients[,"Std. Error"])
 ```
+
+```{r results='asis'}
+stargazer(reg5, type = "latex", title = "Call Backs Rates (Box Only, Both Periods)",
+          covariate.labels = c("White", "Crime",
+                               "GED","Employment Gap","Chain FE", "Center FE"), 
+          digits = 6, single.row = TRUE,
+          se = list(robust_se))
+```
+
+In this model, subsetting the data for only applications that feature the box requires dropping the box and box * white interaction variables. Given that, being white does limit the response rate ($-0.0014$) to a certain degree and so does having previously committed a crime ($-0.0497$). The response rate declines in greater magnitude given a crime as opposed to being white.
 
 # Question 5:
 
 Based on the above analysis, what are your conclusions about the effects of BTB?
 
 ### Answer:
+
+The box is potentially equalizing the playing field for black applicants broadly while certainly reducing the opportunities for individuals with criminal histories in the same manner, after controlling for educational and employment histories. Black applicants, having the box present on applications, are met with less of the structural bias commonly present in non-box applications as evidenced by the decreased coefficient on white. However given the statistical significance of this coefficient, this relationship cannot be extrapolated broadly. For individuals who have been convicted of a crime before, the box reduces the likelihood that they will receive a callback. And this coefficient is indeed statistically significant.
 
