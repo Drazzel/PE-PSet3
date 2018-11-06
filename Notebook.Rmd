@@ -61,14 +61,14 @@ What is the average callback rate for people who committed crimes? For those who
 ### Answer:
 ```{r}
 # Summary of Means across both groups across both periods
-data %>% group_by(crime) %>% summarise(mean = mean(response))
+data %>% filter(., crimbox==1) %>% filter(., pre==1) %>% group_by(crime) %>% summarise(mean = mean(response))
 
 # Significance test across two groups for the callback rate
-t.test(response~crime, data = data)
+data %>% filter(., crimbox==1) %>% filter(., pre==1) %>% t.test(response~crime, data = .)
 ```
 
 
-The average callback rate for people who committed crimes is 10.94% and is 12.51% for individuals who did not commit crimes for all types of applications across both time periods. The difference is statistically significant at a 95% confidence level.
+The average callback rate for people who committed crimes is 8.46% and is 13.57% for individuals who did not commit crimes for all applications that ask about about prior criminal history in the pre-Ban The Box period. The difference is statistically significant at a 95% confidence level.
 
 ## B)
 
@@ -88,7 +88,8 @@ Regress callback rates on race, GED, and employment gap. Include “chain 1" and
 
 ```{r}
 reg1 <- data %>% filter(., crimbox==1) %>%
-  lm(response~white + ged + empgap + chain_id + center, data = .)
+  lm(response~white + ged + empgap + factor(chain_id) + factor(center), data = .)
+summary(reg1)
 ```
 
 ```{r results='asis'}
