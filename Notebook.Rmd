@@ -89,13 +89,13 @@ Regress callback rates on race, GED, and employment gap. Include “chain 1" and
 ```{r}
 reg1 <- data %>% filter(., crimbox==1) %>%
   lm(response~white + ged + empgap + factor(chain_id) + factor(center), data = .)
-summary(reg1)
 ```
 
 ```{r results='asis'}
 stargazer(reg1, type = "latex", title = "Call Back Rates With Fixed Effects (Box Only, Both Periods)",
           covariate.labels = c("White", "GED",
-                               "Employment Gap", "Chain FE", "Center FE"), 
+                               "Employment Gap"), omit = c("chain_id", "center"),
+          add.lines = list(c("Chain Fixed Effects", "Yes"),c("Center Fixed Effects", "Yes")),
           digits = 6, single.row = TRUE)
 ```
 
@@ -118,12 +118,13 @@ reg2 <- data %>% filter(., crimbox==1) %>%
 stargazer(reg2, type = "latex", title = "Call Back Rates Without Fixed Effects (Box Only, Both Periods)",
           covariate.labels = c("White", "GED",
                                "Employment Gap"),
+          add.lines = list(c("Chain Fixed Effects", "No"),c("Center Fixed Effects", "No")),
           digits = 6, single.row = TRUE)
 ```
 
 ### Answer:
 
-Removing the fixed effects minimizes the impact of race as a factor on response rate (from $-0.001483$ to $-0.001140$). The chain and center fixed effects normalize the impact of race on callbacks by the heterogeneous differences across jurisdictions, making them valuable tools for analyzing how race influences the response rate among applications that feature the box. 
+Removing the fixed effects increases the impact of race as a factor on response rate (from $-0.000879$ to $-0.001140$). The chain and center fixed effects normalize the impact of race on callbacks by the heterogeneous differences across jurisdictions, making them valuable tools for analyzing how race influences the response rate among applications that feature the box. 
 
 ## C) 
 
@@ -136,13 +137,14 @@ reg3 <- data %>% filter(., crimbox==1) %>%
 ```{r results='asis'}
 stargazer(reg3, type = "latex", title = "Call Back Rates With Crime (Box Only, Both Periods)",
           covariate.labels = c("White", "GED",
-                               "Employment Gap", "Crime"), 
+                               "Employment Gap", "Crime"),
+          add.lines = list(c("Chain Fixed Effects", "No"),c("Center Fixed Effects", "No")),
           digits = 6, single.row = TRUE)
 ```
 
 ### Answer:
 
-The coefficient on white further decreases in magnitude even without the fixed effects (Table 3). In the absence of the fixed effects, the white coefficient changes from $-0.001140$ to $-0.001117$. This is a clear example of the omitted variable bias influencing the white coefficient.
+The coefficient on white decreases in magnitude without the fixed effects (Table 3). In the absence of the fixed effects, the white coefficient changes from $-0.001140$ to $-0.001117$. This is a clear example of the omitted variable bias influencing the white coefficient.
 
 # Question 3:
 
@@ -186,13 +188,15 @@ Estimate the model from question 3 on both “Box” and non-“Box” applicati
 
 ```{r}
 reg4 <- data %>% filter(., pre==1) %>%
-  lm(response~crimbox + white + box_white + crime + ged + empgap + center, data = .)
+  lm(response~crimbox + white + box_white + crime + ged + empgap + factor(center) + factor(chain_id), data = .)
 ```
 
 ```{r results='asis'}
 stargazer(reg4, type = "latex", title = "Call Backs Rates (Pre-Period)",
           covariate.labels = c("Box","White", "Box x White","Crime",
-                               "GED","Employment Gap", "Center FE"), 
+                               "GED","Employment Gap"),
+          add.lines = list(c("Chain Fixed Effects", "Yes"),c("Center Fixed Effects", "Yes")),
+          omit = c("center","chain_id"),
           digits = 6, single.row = TRUE)
 ```
 
@@ -214,7 +218,7 @@ interaction of “crimbox” and “white”? Interpret these findings.
 
 ### Answer:
 
-The coefficient on crimbox in this model is not statistically significant. The interaction of crimbox and white is only statistically significant at the 90% level. The interaction coefficient signifies that being white and submitting for a position where the box is present slightly diminishes the likelihood ($-0.0296$) of a callback. This is simultaneously offset by the crimbox coefficient ($0.0158$) despite the fact that it's not statistically significant.
+The coefficient on crimbox in this model is not statistically significant. The interaction of crimbox and white is statistically significant at the 95% level. The interaction coefficient signifies that being white and submitting for a position where the box is present slightly diminishes the likelihood ($-0.0274$) of a callback. This is simultaneously compounded by the crimbox coefficient ($-0.0054$), being cognizant of the fact that it's not statistically significant.
 
 ## D)
 
@@ -224,19 +228,21 @@ Now estimate the model from question 3 on just “Box” applications in both pe
 
 ```{r}
 reg5 <- data %>% filter(., crimbox==1) %>% 
-  lm(response~white + crime + ged + empgap + chain_id + center, data = .)
+  lm(response~white + crime + ged + empgap + factor(chain_id) + factor(center), data = .)
 robust_se <- as.vector(summary(reg5,robust = T)$coefficients[,"Std. Error"])
 ```
 
 ```{r results='asis'}
 stargazer(reg5, type = "latex", title = "Call Backs Rates (Box Only, Both Periods)",
           covariate.labels = c("White", "Crime",
-                               "GED","Employment Gap","Chain FE", "Center FE"), 
+                               "GED","Employment Gap"), 
+          add.lines = list(c("Chain Fixed Effects", "Yes"),c("Center Fixed Effects", "Yes")),
+          omit = c("chain_id","center"),
           digits = 6, single.row = TRUE,
           se = list(robust_se))
 ```
 
-In this model, subsetting the data for only applications that feature the box requires dropping the box and box * white interaction variables. Given that, being white does limit the response rate ($-0.0014$) to a certain degree and so does having previously committed a crime ($-0.0497$). The response rate declines in greater magnitude given a crime as opposed to being white.
+In this model, subsetting the data for only applications that feature the box requires dropping the box and box * white interaction variables. Given that, being white does limit the response rate ($-0.00087$) to a certain degree, but this effect is not statistically significantly different from 0, and so does having previously committed a crime ($-0.05203$), which is significant. The response rate declines in greater magnitude given a crime as opposed to being white.
 
 # Question 5:
 
