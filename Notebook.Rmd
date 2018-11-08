@@ -10,13 +10,11 @@ rm(list=ls())
 
 # Load Libraries
 library(haven)
-library(reshape)
 library(tidyverse)
 library(magrittr)
 library(survival)
+library(car)
 library(ggplot2)
-library(rdd)
-library(ggpubr)
 library(stargazer)
 library(sciplot)
 
@@ -186,6 +184,8 @@ Estimate the model from question 3 on both “Box” and non-“Box” applicati
 
 ### Answer:
 
+See Table 4.
+
 ```{r}
 reg4 <- data %>% filter(., pre==1) %>%
   lm(response~crimbox + white + box_white + crime + ged + empgap + factor(center) + factor(chain_id), data = .)
@@ -250,5 +250,5 @@ Based on the above analysis, what are your conclusions about the effects of BTB?
 
 ### Answer:
 
-The box is potentially equalizing the playing field for black applicants broadly while certainly reducing the opportunities for individuals with criminal histories in the same manner, after controlling for educational and employment histories. Black applicants, having the box present on applications, are met with less of the structural bias commonly present in non-box applications as evidenced by the decreased coefficient on white. However given the statistical significance of this coefficient, this relationship cannot be extrapolated broadly. For individuals who have been convicted of a crime before, the box reduces the likelihood that they will receive a callback. And this coefficient is indeed statistically significant.
+The box is potentially equalizing the playing field for black applicants broadly while certainly reducing the opportunities for individuals with criminal histories in the same manner, after controlling for educational and employment histories. Black applicants, having the box present on applications, are met with less of the structural bias commonly present in non-box applications as evidenced by the decreased coefficient on white. However given the statistical significance of this coefficient, this relationship cannot be extrapolated broadly. For individuals who have been convicted of a crime before, the box reduces the likelihood that they will receive a callback. This coefficient is indeed statistically significant.
 
